@@ -33,18 +33,20 @@ public class Item
 public class Inventory
 {
     private List<Item> items = new List<Item>();
-    private string filePath;
+    private string mainFilePath;
+    private string tempFilePath;
 
-    public Inventory(string filePath)
+    public Inventory(string mainFilePath, string tempFilePath)
     {
-        this.filePath = filePath;
-        LoadInventory();
+        this.mainFilePath = mainFilePath;
+        this.tempFilePath = tempFilePath;
+        LoadTempInventory(); // Load from temp on start.
     }
 
     public void AddItem(Item item)
     {
         items.Add(item);
-        SaveInventory();
+        SaveTempInventory();
     }
 
     public void RemoveItem(int itemId)
@@ -53,7 +55,7 @@ public class Inventory
         if (itemToRemove != null)
         {
             items.Remove(itemToRemove);
-            SaveInventory();
+            SaveTempInventory();
         }
         else
         {
@@ -81,22 +83,42 @@ public class Inventory
         return totalValue;
     }
 
-    private void SaveInventory()
+    public void SaveMainInventory()
     {
         string jsonString = JsonSerializer.Serialize(items);
-        File.WriteAllText(filePath, jsonString);
+        File.WriteAllText(mainFilePath, jsonString);
     }
 
-    private void LoadInventory()
+    public void LoadMainInventory()
     {
-        if (File.Exists(filePath))
+        if (File.Exists(mainFilePath))
         {
-            string jsonString = File.ReadAllText(filePath);
+            string jsonString = File.ReadAllText(mainFilePath);
             items = JsonSerializer.Deserialize<List<Item>>(jsonString) ?? new List<Item>();
         }
         else
         {
-            items = new List<Item>(); // Ensure list is initialized even if file doesn't exist.
+            items = new List<Item>();
+        }
+        SaveTempInventory(); //Copy main to temp.
+    }
+
+    private void SaveTempInventory()
+    {
+        string jsonString = JsonSerializer.Serialize(items);
+        File.WriteAllText(tempFilePath, jsonString);
+    }
+
+    private void LoadTempInventory()
+    {
+        if (File.Exists(tempFilePath))
+        {
+            string jsonString = File.ReadAllText(tempFilePath);
+            items = JsonSerializer.Deserialize<List<Item>>(jsonString) ?? new List<Item>();
+        }
+        else
+        {
+            items = new List<Item>();
         }
     }
 }
@@ -121,7 +143,9 @@ public class UI
             Console.WriteLine("3. View Item");
             Console.WriteLine("4. View All Items");
             Console.WriteLine("5. Calculate Total Value");
-            Console.WriteLine("6. Exit");
+            Console.WriteLine("6. Save Inventory to Main File");
+            Console.WriteLine("7. Load Inventory from Main File");
+            Console.WriteLine("8. Exit");
             Console.Write("Enter your choice: ");
 
             string choice = Console.ReadLine();
@@ -144,6 +168,14 @@ public class UI
                     CalculateTotalValue();
                     break;
                 case "6":
+                    inventory.SaveMainInventory();
+                    Console.WriteLine("Inventory saved to main file.");
+                    break;
+                case "7":
+                    inventory.LoadMainInventory();
+                    Console.WriteLine("Inventory loaded from main file.");
+                    break;
+                case "8":
                     return;
                 default:
                     Console.WriteLine("Invalid choice.");
@@ -224,8 +256,9 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        string filePath = "inventory.json"; // File to save/load inventory data
-        Inventory inventory = new Inventory(filePath);
+        string mainFilePath = "inventory.json";
+        string tempFilePath = "temp_inventory.json";
+        Inventory inventory = new Inventory(mainFilePath, tempFilePath);
         UI ui = new UI(inventory);
         ui.Run();
     }
