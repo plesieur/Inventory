@@ -33,10 +33,18 @@ public class Item
 public class Inventory
 {
     private List<Item> items = new List<Item>();
+    private string filePath;
+
+    public Inventory(string filePath)
+    {
+        this.filePath = filePath;
+        LoadInventory();
+    }
 
     public void AddItem(Item item)
     {
         items.Add(item);
+        SaveInventory();
     }
 
     public void RemoveItem(int itemId)
@@ -45,6 +53,7 @@ public class Inventory
         if (itemToRemove != null)
         {
             items.Remove(itemToRemove);
+            SaveInventory();
         }
         else
         {
@@ -72,13 +81,13 @@ public class Inventory
         return totalValue;
     }
 
-    public void SaveInventory(string filePath)
+    private void SaveInventory()
     {
         string jsonString = JsonSerializer.Serialize(items);
         File.WriteAllText(filePath, jsonString);
     }
 
-    public void LoadInventory(string filePath)
+    private void LoadInventory()
     {
         if (File.Exists(filePath))
         {
@@ -96,12 +105,10 @@ public class Inventory
 public class UI
 {
     private Inventory inventory;
-    private string filePath = "inventory.json";
 
     public UI(Inventory inventory)
     {
         this.inventory = inventory;
-        this.inventory.LoadInventory(filePath);
     }
 
     public void Run()
@@ -137,7 +144,6 @@ public class UI
                     CalculateTotalValue();
                     break;
                 case "6":
-                    inventory.SaveInventory(filePath);
                     return;
                 default:
                     Console.WriteLine("Invalid choice.");
@@ -218,7 +224,8 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        Inventory inventory = new Inventory();
+        string filePath = "inventory.json"; // File to save/load inventory data
+        Inventory inventory = new Inventory(filePath);
         UI ui = new UI(inventory);
         ui.Run();
     }
