@@ -256,8 +256,8 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        string mainFilePath = "inventory.json";
-        string tempFilePath = "temp_inventory.json";
+        string mainFilePath = "../../../inventory.json";
+        string tempFilePath = "../../../temp_inventory.json";
         Inventory inventory = new Inventory(mainFilePath, tempFilePath);
         UI ui = new UI(inventory);
         ui.Run();
